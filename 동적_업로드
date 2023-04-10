@@ -115,3 +115,5 @@ START-OF-SELECTION.
   
 * 1번째는 File name 불러오기
 * 2번째는 Table Name 
+
+출처 : https://blogs.sap.com/2019/09/20/dynamically-update-data-from-excel-to-database-table/
