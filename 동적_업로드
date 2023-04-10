@@ -1,4 +1,3 @@
-REPORT zr_dynamic_table_update_excel NO STANDARD PAGE HEADING.
 *** --- Data Declarations
 DATA:lt_excel       TYPE TABLE OF alsmex_tabline,
      lt_dref        TYPE REF TO data,
