@@ -111,3 +111,7 @@ START-OF-SELECTION.
       ENDIF.
     ENDIF.
   ENDIF.
+  
+  
+* 1번째는 File name 불러오기
+* 2번째는 Table Name 
