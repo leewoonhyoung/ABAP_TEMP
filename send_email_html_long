@@ -1,0 +1,200 @@
+  data:
+       lo_send_request type ref to cl_bcs,
+       lo_document type ref to cl_document_bcs,
+       lo_sender type ref to if_sender_bcs,
+       lo_recipient type ref to if_recipient_bcs,
+       lt_message_body type bcsy_text,
+       li_soli_tab type soli_tab,
+       lw_soli_tab type soli,
+       lx_document_bcs type ref to cx_document_bcs,
+*      lv_send type ad_smtpadr value 'narender.singh@sap.com',
+       lv_sent_to_all type os_boolean,
+       lv_subject type syst-uline,
+       lv_subtext type string.
+
+  data: gt_mess type table of solisti1.
+  data: gs_mess type solisti1.
+  data: lv_name(20) c.
+
+  data: lv_name(20) c.
+  data: lv_pernr type pernr_d.
+*******************End of data declarations *******************************************
+
+*Initiate class.
+clear: lo_send_request,gt_mess,lo_document,lv_subtext,lt_recipeints,lo_recipient,lv_sent_to_all.
+
+* Initiate the bcs class, and set sender details.
+    "create send request
+    try.
+         lo_send_request = cl_bcs=>create_persistent( ).
+      catch cx_send_req_bcs.
+    endtry.
+
+    "Create sender
+    try.
+        lo_sender = cl_sapuser_bcs=>create( sy-uname ).
+      catch cx_address_bcs.
+    endtry.
+
+    "Set sender
+    try.
+         lo_send_request->set_sender( lo_sender ).
+      catch cx_send_req_bcs.
+    endtry.
+
+******************Prepare Body *************************************************
+clear gs_mess.
+  gs_mess-line = '<html>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<style type="text/css">'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<!--'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = 'table{background-color:#fff;border="5":collapse;}'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = 'td.data{background-color:#fff;border:1px solid black;padding:3px;}'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = 'td.heading{background-color:#F5F6CE;text-align:center;border:1px solidblack;padding:3px;}'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '-->'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '</style></head>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<body>'.
+  append gs_mess to gt_mess.
+
+  lv_name = 'Your Name'.
+
+  clear gs_mess.
+  CONCATENATE '<table>Dear ' lv_name ',</table>' INTO gs_mess-line SEPARATED BY space.
+  append gs_mess to gt_mess.
+
+clear gs_mess.
+  gs_mess-line = '<table><p>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = 'This is just a test mail to your mail ID to demonstrate how CL_BCS works :)  '.
+  append gs_mess to gt_mess.
+
+clear gs_mess.
+  gs_mess-line = '</p></table>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<table border="1" bgcolor="#0A2A22">'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<tr>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<th> Name </th>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<th> Pernr </th>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '</tr>'.
+  append gs_mess to gt_mess.
+
+ clear ls_comm_data.
+    concatenate '<tr><td>' lv_name                   '</td><td>'
+                                        lv_pernr                   '</td><td>'
+                           into gs_mess-line separated by space.
+    append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '</table>'.
+  append gs_mess to gt_mess.
+
+
+clear gs_mess.
+  gs_mess-line = '<table><p>'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+ 
+  clear gs_mess.
+  gs_mess-line = 'I have some post still I am working on other you can check with this link -> '.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '<a href="http://helpforabap.blogspot.sg/">Help Others </a>.'.
+  append gs_mess to gt_mess.
+
+  clear gs_mess.
+  gs_mess-line = '</p></table></body></html>'.
+  append gs_mess to gt_mess.
+
+******************End Mail Body *************************************************
+**Prepare send.
+
+"Put text into the document
+          try.
+              lo_document = cl_document_bcs=>create_document(
+              i_type = 'HTM'
+              i_text = gt_mess
+              i_subject = 'Test Mail' ).
+            catch cx_document_bcs.
+          endtry.
+
+"Pass the document to send request
+          try.
+              lo_send_request->set_document( lo_document ).
+            catch cx_send_req_bcs.
+          endtry.
+
+            try.
+              CALL METHOD lo_send_request->set_message_subject
+                EXPORTING
+                  ip_subject = 'This subject can exceed to any length but don't put entire body ;)'.
+            catch cx_send_req_bcs.
+          endtry.
+
+"Put your mail id here
+           try.
+                lo_recipient = cl_cam_address_bcs=>create_internet_address( 'yourmailid@gmail.com' ).
+              catch cx_address_bcs.
+            endtry.
+           try.
+                "Set recipient
+                lo_send_request->add_recipient(
+                EXPORTING
+                i_recipient  = lo_recipient
+                i_express    = 'X'
+                " i_copy       = 'X' ). "this is to send for CC
+              catch cx_send_req_bcs.
+            endtry.
+
+* Send email
+          try .
+              lo_send_request->set_send_immediately( 'X' ).
+              lo_send_request->send(
+                     EXPORTING
+                     i_with_error_screen = 'X'
+                     RECEIVING
+                     result = lv_sent_to_all ).
+
+              commit work.
+            catch cx_send_req_bcs.
+          endtry.
